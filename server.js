@@ -1,6 +1,5 @@
 import dns from 'node:dns';
-// This line fixes the ECONNREFUSED srv error by forcing IPv4 lookups first
-dns.setDefaultResultOrder('ipv4first');
+dns.setDefaultResultOrder('ipv4first'); // Fixes ECONNREFUSED for MongoDB Atlas
 
 import express from "express";
 import mongoose from "mongoose";
@@ -16,7 +15,7 @@ const app = express();
 
 // ================= MIDDLEWARE =================
 app.use(cors({
-  origin: "*", 
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Explicitly allow Vite
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, 
@@ -41,35 +40,19 @@ const connectDB = async () => {
     if (!process.env.MONGO_URI) {
       throw new Error("MONGO_URI is not defined in .env file");
     }
-
-    // Adding recommended options for better connection stability
     await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      serverSelectionTimeoutMS: 5000,
     });
-    
     console.log(" MongoDB Connected Successfully");
   } catch (err) {
-    console.error(" MongoDB Connection Error:");
-    console.error(err.message);
-    // Wait 5 seconds before exiting to see the logs
+    console.error(" MongoDB Connection Error:", err.message);
     setTimeout(() => process.exit(1), 5000);
   }
 };
 
 connectDB();
 
-// ================= ERROR HANDLING =================
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: "Something went wrong on the server!",
-    error: process.env.NODE_ENV === 'development' ? err.message : {} 
-  });
-});
-
-// ================= SERVER START =================
 const PORT = process.env.PORT || 10000; 
-
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(` Server running on port ${PORT}`);
 });
