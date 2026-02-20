@@ -16,7 +16,13 @@ const app = express();
 
 // ================= MIDDLEWARE =================
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+  // ✅ FIXED: Added your local and potentially live frontend origins
+  origin: [
+    "http://localhost:5173", 
+    "http://127.0.0.1:5173",
+    // Replace the line below with your ACTUAL frontend URL from Render
+    "https://your-actual-frontend-name.onrender.com" 
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -32,7 +38,7 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/result", resultRoutes);
 
 app.get("/", (req, res) => {
-  res.status(200).send("QuizPro Backend Server Running - v2026.1");
+  res.status(200).send("Dileep Kumar's QuizPro Backend Server Running - v2026.1");
 });
 
 // ================= DATABASE CONNECTION =================
@@ -42,6 +48,7 @@ const connectDB = async () => {
       throw new Error("MONGO_URI is not defined in .env file");
     }
 
+    // Connects to MongoDB using the URI provided in Render/Local environment
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB Connected Successfully");
 
@@ -55,6 +62,7 @@ connectDB();
 // ================= SERVER =================
 const PORT = process.env.PORT || 10000;
 
+// ✅ FIXED: Removed "0.0.0.0" to let Render handle the port binding automatically
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
