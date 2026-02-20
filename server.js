@@ -23,6 +23,7 @@ app.use(cors({
       "http://localhost:5173", 
       "http://127.0.0.1:5173",
       /\.onrender\.com$/ // This allows ANY site ending in .onrender.com to connect
+       /\.vercel\.app$/
     ];
     if (!origin || allowedOrigins.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
       callback(null, true);
