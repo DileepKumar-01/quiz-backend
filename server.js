@@ -16,13 +16,20 @@ const app = express();
 
 // ================= MIDDLEWARE =================
 app.use(cors({
-  // ✅ FIXED: Added your local and potentially live frontend origins
-  origin: [
-    "http://localhost:5173", 
-    "http://127.0.0.1:5173",
-    // Replace the line below with your ACTUAL frontend URL from Render
-    "https://your-actual-frontend-name.onrender.com" 
-  ],
+  // ✅ MODIFIED: Added a function to allow dynamic origins. 
+  // This helps if your Render URL changes or if you are testing locally.
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173", 
+      "http://127.0.0.1:5173",
+      /\.onrender\.com$/ // This allows ANY site ending in .onrender.com to connect
+    ];
+    if (!origin || allowedOrigins.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -62,7 +69,7 @@ connectDB();
 // ================= SERVER =================
 const PORT = process.env.PORT || 10000;
 
-// ✅ FIXED: Removed "0.0.0.0" to let Render handle the port binding automatically
+// ✅ FIXED: Removed "0.0.0.0" to let Render handle port binding automatically
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

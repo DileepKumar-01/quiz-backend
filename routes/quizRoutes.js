@@ -52,28 +52,27 @@ router.get("/quizzes", async (req, res) => {
 router.get("/quiz-by-code/:code", async (req, res) => {
   try {
     const quiz = await Quiz.findOne({ quizCode: req.params.code });
-    
-    if (!quiz) {
-      return res.status(404).json({ message: "Quiz not found" });
-    }
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    const currentTime = new Date().getTime();
+    // ✅ Use .getTime() to compare absolute universal time
+    const currentTime = new Date().getTime(); 
     const quizStart = new Date(quiz.startTime).getTime();
     const quizEnd = new Date(quiz.endTime).getTime();
 
     if (currentTime < quizStart) {
+      // Convert the start time to a readable format for the student's browser
+      const readableStart = new Date(quiz.startTime).toLocaleString();
       return res.status(403).json({ 
-        message: `This quiz is scheduled to start at ${new Date(quiz.startTime).toLocaleString()}` 
+        message: `This quiz is scheduled to start at ${readableStart}` 
       });
     }
-    
+
     if (currentTime > quizEnd) {
       return res.status(403).json({ message: "This quiz session has already expired." });
     }
 
     res.status(200).json(quiz);
   } catch (error) {
-    console.error("GET QUIZ ERROR:", error);
     res.status(500).json({ message: "Server error loading quiz" });
   }
 });
