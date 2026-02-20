@@ -7,19 +7,26 @@ const router = express.Router();
 // ================= REGISTER API =================
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, phone, gender, password, role, id } = req.body; 
-    
+    const { name, email, phone, gender, password, role, regNo } = req.body;
+
+    // Basic validation
+    if (!name || !email || !password || !regNo) {
+      return res.status(400).json({ message: "Please fill all required fields" });
+    }
+
+    // Check duplicate email
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User with this email already exists" });
     }
 
-    // Checking if the ID/RegNo is already in use
-    const existingID = await User.findOne({ regNo: id });
+    // Check duplicate registration number
+    const existingID = await User.findOne({ regNo });
     if (existingID) {
-      return res.status(400).json({ message: "Registration Number/ID already exists" });
+      return res.status(400).json({ message: "Registration Number already exists" });
     }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -30,12 +37,15 @@ router.post("/register", async (req, res) => {
       gender,
       password: hashedPassword,
       role,
-      regNo: id // This ensures the 'id' from your form becomes 'regNo' in MongoDB
+      regNo
     });
 
     await newUser.save();
-    console.log(`New user registered: ${id}`);
+
+    console.log(`New user registered: ${regNo}`);
+
     res.status(201).json({ message: "User registered successfully" });
+
   } catch (error) {
     console.error("Registration Error:", error);
     res.status(500).json({ message: "Server error during registration" });
@@ -46,7 +56,10 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { regNo, password, role } = req.body;
-    console.log(`Attempting login for RegNo: ${regNo}, Role: ${role}`);
+
+    if (!regNo || !password) {
+      return res.status(400).json({ message: "Please enter RegNo and Password" });
+    }
 
     const user = await User.findOne({ regNo });
 
@@ -72,10 +85,11 @@ router.post("/login", async (req, res) => {
         phone: user.phone,
         regNo: user.regNo,
         role: user.role,
-        photo: user.photo,
-        qualification: user.qualification
+        qualification: user.qualification,
+        photo: user.photo
       }
     });
+
   } catch (error) {
     console.error("Login Error:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -86,6 +100,7 @@ router.post("/login", async (req, res) => {
 router.put("/update-profile/:id", async (req, res) => {
   try {
     const { name, email, phone, qualification, photo, currentPassword, newPassword } = req.body;
+
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -96,10 +111,12 @@ router.put("/update-profile/:id", async (req, res) => {
       if (!currentPassword) {
         return res.status(400).json({ message: "Current password required" });
       }
+
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
         return res.status(400).json({ message: "Current password incorrect" });
       }
+
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
     }
@@ -108,7 +125,7 @@ router.put("/update-profile/:id", async (req, res) => {
     user.email = email || user.email;
     user.phone = phone || user.phone;
     user.qualification = qualification || user.qualification;
-    user.photo = photo || user.photo; 
+    user.photo = photo || user.photo;
 
     await user.save();
 
@@ -125,6 +142,7 @@ router.put("/update-profile/:id", async (req, res) => {
         role: user.role
       }
     });
+
   } catch (error) {
     console.error("Update Error:", error);
     res.status(500).json({ message: "Server error during profile update" });

@@ -19,7 +19,7 @@ router.post("/create-quiz", async (req, res) => {
       createdBy,
       startTime,
       endTime,
-      duration: duration || 30, // Fallback to 30
+      duration: duration || 30, 
       questions
     });
 
@@ -57,7 +57,6 @@ router.get("/quiz-by-code/:code", async (req, res) => {
       return res.status(404).json({ message: "Quiz not found" });
     }
 
-    // FIXED: Convert both to numeric timestamps to ignore server timezone shifts
     const currentTime = new Date().getTime();
     const quizStart = new Date(quiz.startTime).getTime();
     const quizEnd = new Date(quiz.endTime).getTime();
